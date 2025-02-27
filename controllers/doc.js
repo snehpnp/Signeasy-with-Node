@@ -4,7 +4,6 @@ const fs = require("fs")
 const { ObjectID } = require('bson');
 
 module.exports.uploadOriginal = async(req,res)=>{
-  console.log("pp",req.body);
 
     let options = {
         'method': 'POST',
@@ -25,9 +24,6 @@ module.exports.uploadOriginal = async(req,res)=>{
           }
         };
     request(options, async function (error, response) {
-      try {
-        console.log("error",error);
-        console.log("response",response.body);
         if (error) res.json({error:error});
         
         let resp = JSON.parse(response.body)
@@ -49,14 +45,6 @@ module.exports.uploadOriginal = async(req,res)=>{
           success:true,
           message:"file uploaded successfully "+resp
         })
-      } catch (error) {
-        console.log(error);
-        return res.status(500).json({
-          success:false,
-          message:error
-        })
-      }
-
     })
         
 }
@@ -228,11 +216,112 @@ module.exports.downloadEnvelopeAndCertificate = async(req,res)=>{
         console.log('Download Completed'); 
     })
     console.log(Object.keys(response));
-    // const data = fs.readFileSync(`${__dirname}/file.txt`,'latin1')
-    // console.log(data);
-    // res.send(response.body)
+    const data = fs.readFileSync(`${__dirname}/file.txt`,'latin1')
+    console.log(data);
+    res.send(response.body)
     
   });
 
   
 }
+
+
+
+
+
+
+
+
+
+// module.exports.sendEnvelope = async(req,res)=>{
+
+//   const doc = await docSchema.findById(ObjectID(req.body.doc_id))
+
+//   let options = {
+//     'method': 'POST',
+//     'url': 'https://api.signeasy.com/v3/rs/envelope/',
+//     'headers': {
+//       'Authorization': 'Bearer '+process.env.SIGNEASY_ACCESS_TOKEN,
+//       'Content-Type': 'application/json'
+//     },
+//     body:JSON.stringify(
+//       {
+//         "embedded_signing": true,
+//         "is_ordered": false,
+//         "message": "This is for you to confirm your payment",
+//         "sources": [
+//          {
+//           "id": Number(doc.originalId),
+//           "type": "original",
+//           "name": "CONFIDENTIAL",
+//           "source_id": 1
+//          }
+//         ],
+//         "recipients": [
+//          {
+//           "first_name": req.body.first_name,
+//           "last_name": req.body.last_name,
+//           "email": req.body.email,
+//           "recipient_id": 1
+//          }
+//         ],
+       
+        
+//         "signature_panel_types": [
+//          "draw",
+//          "type"
+//         ],
+//         "initial_panel_types": [
+//          "draw"
+//         ],
+//         "fields_payload": [
+//          {
+//           "recipient_id": 1,
+//           "source_id": 1,
+//           "type": "signature",
+//           "required": true,
+//           "page_number": "all",
+//           "position": {
+//            "height": 100,
+//            "width": 100,
+//            "x": doc.x,
+//            "y": doc.y,
+//            "mode": "fixed"
+//           },
+//           "additional_info": {}
+//          }
+//         ]
+//        }
+//     )
+//   }
+//   request(options, function (error, response) {
+//     if (error) res.json({error:error});
+//     // res.send(response.body);
+//     //fetch-link
+//     let resp = JSON.parse(response.body)
+//     console.log(resp,resp.id);
+
+//     let options = {
+//       'method': 'POST',
+//       'url': `https://api.signeasy.com/v3/rs/envelope/${resp.id}/signing/url/`,
+//       'headers': {
+//         'Content-Type': 'application/json',
+//         'Authorization': 'Bearer '+process.env.SIGNEASY_ACCESS_TOKEN,
+    
+//       },
+//       body: JSON.stringify({
+//         "recipient_email":req.body.email,
+//       })
+    
+//     };
+//     request(options, async function (error, response) {
+//       if (error) res.json({error:error});
+//       let resp2 = JSON.parse(response.body)
+//       resp2.pending_id = resp.id
+//       doc.pendingId = resp.id
+//       await doc.save()
+//       res.send(resp2);
+//     });
+    
+//   });
+// }
