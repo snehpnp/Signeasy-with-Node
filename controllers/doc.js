@@ -80,19 +80,18 @@ module.exports.sendEnvelope = async (req, res) => {
         page_number: "all",
         position: {
           xOffset: 0,
-          yOffset: 0,
+          yOffset: -20,
           height: 30,
           width: 100,
 
           mode: "referenceText",
-          reference_text: "_____",
-          text: "_____",
+          reference_text: "{{SIGN}}",
+          text: "{{SIGN}}",
         },
         additional_info: {},
       },
     ];
 
-    console.log(fields_payload);
 
     let options = {
       method: "POST",
@@ -185,32 +184,38 @@ module.exports.getSignedId = async (req, res) => {
   });
 };
 
+const axios = require("axios");
+const path = require("path");
+
 module.exports.downloadEnvelopeAndCertificate = async (req, res) => {
-  let options = {
-    method: "GET",
-    url: `https://api.signeasy.com/v3/rs/envelope/signed/${req.body.signed_id}/certificate`,
-    headers: {
-      Authorization: "Bearer " + process.env.SIGNEASY_ACCESS_TOKEN,
-    },
-  };
+  try {
+    const signedId = req.body.signed_id;
+    const url = `https://api.signeasy.com/v3/rs/envelope/signed/${signedId}/certificate`;
 
-  request(options, function (error, response) {
-    if (error) res.json({ error: error });
-
-    const path = `${__dirname}/file.pdf`;
-    const filePath = fs.createWriteStream(path, { encoding: "latin1" });
-
-    response.pipe(filePath);
-
-    filePath.on("finish", () => {
-      filePath.close();
-      console.log("Download Completed");
+    const response = await axios.get(url, {
+      headers: { Authorization: `Bearer ${process.env.SIGNEASY_ACCESS_TOKEN}` },
+      responseType: "stream", // Important for file download
     });
-    console.log(Object.keys(response));
-    const data = fs.readFileSync(`${__dirname}/file.txt`, "latin1");
-    console.log(data);
-    res.send(response.body);
-  });
+
+    const filePath = path.join(__dirname, "certificate.pdf");
+    const writer = fs.createWriteStream(filePath);
+
+    response.data.pipe(writer);
+
+    writer.on("finish", () => {
+      console.log("Download Completed");
+      res.download(filePath); // Send file to user for download
+    });
+
+    writer.on("error", (error) => {
+      console.error("File Write Error:", error);
+      res.status(500).json({ error: "File download failed" });
+    });
+
+  } catch (error) {
+    console.error("Download Error:", error);
+    res.status(500).json({ error: "Failed to download PDF" });
+  }
 };
 
 // module.exports.sendEnvelope = async(req,res)=>{
